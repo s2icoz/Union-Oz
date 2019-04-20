@@ -6,7 +6,7 @@ class ValorOz{
   private:
     int val;
     ValorOz *father;  /*Una variable solo puede tener un padre*/
-    std::vector<ValorOz> sons;  /*Una variable solo puede tener multiples hijos
+    std::vector<ValorOz *> sons;  /*Una variable solo puede tener multiples hijos+
                                 en caso de ser una etiqueta*/
   public:
     ValorOz(){
