@@ -41,7 +41,7 @@ void ValorOz::operator =(int num){
 }
 
 
-void ValorOz::operator =(ValorOz val2){
+void ValorOz::operator =(ValorOz &val2){
   if (sons.size() > 1 && val2.sons.size() > 1 &&
       sons.size() == val2.sons.size()){
     /*Caso etiquetas*/
@@ -60,12 +60,12 @@ void ValorOz::operator =(ValorOz val2){
     /*llevamos la Recursividad de "y" al máximo y se la agregamos a "z" para que
     /*quede asi:
     /*z->x->y*/
-    ValorOz *recorredor;
-    recorredor = this;
-    while (recorredor->sons.size()) {
-      recorredor = recorredor->sons[0];
+    if (!sons.size()){
+      sons.push_back(&val2);
     }
-    recorredor->sons.push_back(&val2);
+    else{
+      val2.add_son(this);
+    }
   }
   else{
     /*Esta condicion debe ir priemro*/
@@ -78,4 +78,9 @@ void ValorOz::operator =(ValorOz val2){
       exit(1);
     }
   }
+}
+
+
+void ValorOz::add_son(ValorOz *n_son){
+  sons.push_back(n_son);
 }

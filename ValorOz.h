@@ -17,7 +17,8 @@ class ValorOz{
     int get_val();
     void operator =(char v);
     void operator =(int num);
-    void operator =(ValorOz val2);
+    void operator =(ValorOz &val2);
+    void add_son(ValorOz *n_son);
 };
 
 #endif
