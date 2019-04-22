@@ -13,3 +13,5 @@ Estudiar:
 
 Actividades:
   1. Pensar-desarrollar prototipos para las clases Almacen y ValorOz
+
+ENERGÍA MUCHACHOS
