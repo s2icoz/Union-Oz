@@ -18,7 +18,7 @@ class ValorOz{
     void operator =(char v);
     void operator =(int num);
     void operator =(ValorOz &val2);
-    void add_son(ValorOz *n_son);
+    void set_son(ValorOz *n_son);
 };
 
 #endif

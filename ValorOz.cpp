@@ -3,12 +3,12 @@
 #include "ValorOz.h"
 
 int ValorOz::get_val(){
-  ValorOz *recorredor;
-  recorredor = this;
-  while (recorredor->sons.size()) {
-    recorredor = recorredor->sons[0];
+  if (sons.size() < 1){
+      return val;
   }
-  return recorredor->val;
+  else{
+    return sons[0]->val;
+  }
 }
 
 
@@ -29,8 +29,6 @@ void ValorOz::operator =(char v){
 void ValorOz::operator =(int num){
   if (sons.size() == 0 && val == -1){
     val = num;
-    /*Su padre y antecesores "tendrán" el mismo val porque a la hora de hacer
-    /*get_val se busca hasta el nivel más profundo de hijos*/
   }
   else{
     fprintf(stderr, "Asignación de una constante a un valor con referencia\n");
@@ -56,15 +54,26 @@ void ValorOz::operator =(ValorOz &val2){
     /*Recursividad para agregar ultimo nivel, ejemplo
     /*x = y
     /*z = y
-    /*No queremos tener dos variables apuntanto a la misma variable, por esto
-    /*llevamos la Recursividad de "y" al máximo y se la agregamos a "z" para que
-    /*quede asi:
-    /*z->x->y*/
+    /*No queremos tener mas de un nivel de recursividad asi que a la hora de
+    *asignar variables envez de hacer que una apunte a la otra, hacemos que la
+    *vacia apunte al hijo de la otra, si es que lo tiene.
+    /*x = y, z = x : No z->x->y, Si x->y z->y*/
     if (!sons.size()){
-      sons.push_back(&val2);
+      if (!val2.sons.size()){ /*Ninguno tiene hijos*/
+        set_son(&val2);
+        if (father != NULL)
+          father->set_son(&val2);
+      }
+      else{
+        set_son(val2.sons[0]);
+        if (father != NULL)
+          father->set_son(&val2);
+      }
     }
     else{
-      val2.add_son(this);
+      val2.set_son(sons[0]);
+      if (val2.father != NULL)
+        val2.father->set_son(sons[0]);
     }
   }
   else{
@@ -81,6 +90,7 @@ void ValorOz::operator =(ValorOz &val2){
 }
 
 
-void ValorOz::add_son(ValorOz *n_son){
+void ValorOz::set_son(ValorOz *n_son){
+  sons.clear();
   sons.push_back(n_son);
 }
