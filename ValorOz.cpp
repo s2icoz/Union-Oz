@@ -2,13 +2,35 @@
 #include <cstdlib>
 #include "ValorOz.h"
 
+using namespace std;
+
+int prev_union(ValorOz *objetivo, ValorOz *contenedor){
+  for (int i = 0; i < contenedor->get_sons().size(); i ++) {
+    if (contenedor->get_sons()[i] == objetivo){
+      return 1;
+    }
+  }
+  return 0;
+}
+
+
 int ValorOz::get_val(){
-  if (sons.size() < 1){
-      return val;
+  if (father != NULL){
+    return father->val;
   }
   else{
-    return sons[0]->val;
+    return val;
   }
+}
+
+
+ValorOz* ValorOz::get_father(){
+  return father;
+}
+
+
+std::vector<ValorOz *> ValorOz::get_sons(){
+  return sons;
 }
 
 
@@ -27,7 +49,7 @@ void ValorOz::operator =(char v){
 
 
 void ValorOz::operator =(int num){
-  if (sons.size() == 0 && val == -1){
+  if (father == NULL){
     val = num;
   }
   else{
@@ -40,57 +62,78 @@ void ValorOz::operator =(int num){
 
 
 void ValorOz::operator =(ValorOz &val2){
-  if (sons.size() > 1 && val2.sons.size() > 1 &&
-      sons.size() == val2.sons.size()){
+  if (this == &val2){
+    fprintf(stderr, "Unión de una variable a si misma\n");
+  }
+  if (campos.size() > 0 && val2.campos.size() > 0 &&
+      campos.size() == val2.campos.size()){
     /*Caso etiquetas*/
     /*Mas de un campo e igual cantidad de campos
     /*Etiquetas de 1 solo campo seran manejadas como variables normales*/
   }
   /*Condicion: hace que nunca se haga un caso de asignacion de variables
   con valores ya asignados normales*/
-  else if ((sons.size() + val2.sons.size()) < 2 &&
-            (get_val() == -1 || val2.get_val() == -1)){
-    /*Caso varaibles*/
-    /*Recursividad para agregar ultimo nivel, ejemplo
-    /*x = y
-    /*z = y
-    /*No queremos tener mas de un nivel de recursividad asi que a la hora de
-    *asignar variables envez de hacer que una apunte a la otra, hacemos que la
-    *vacia apunte al hijo de la otra, si es que lo tiene.
-    /*x = y, z = x : No z->x->y, Si x->y z->y*/
-    if (!sons.size()){
-      if (!val2.sons.size()){ /*Ninguno tiene hijos*/
-        set_son(&val2);
-        if (father != NULL)
-          father->set_son(&val2);
+  else if (campos.size() + val2.campos.size() == 0){
+    ValorOz *temp_father;
+    if (!prev_union(this, &val2) && !prev_union(&val2, this)){
+      if (father == NULL){
+        if (val2.get_father() && val2.get_sons().size()){
+          fprintf(stderr, "Asignacion entre variables previamente ligadas\n");
+          exit(1);
+        }
+        //Emparentamiento de izquierda a derecha
+        val2.get_father()?temp_father = val2.get_father(): temp_father = &val2;
+        set_father(temp_father);
+        temp_father->add_sons(this);
+        if (sons.size()){
+          temp_father->add_sons(get_sons());
+          elim_sons();
+        }
+      }
+      else if (val2.father == NULL){
+        if(get_sons().size()){
+          fprintf(stderr, "Asignacion entre variables previamente ligadas\n");
+          exit(1);
+        }
+        //Emparentamiento de derecha a izquierda
+        get_father()?temp_father = get_father(): temp_father = this;
+        val2.set_father(temp_father);
+        temp_father->add_sons(&val2);
+        if (sons.size()){
+          temp_father->add_sons(val2.get_sons());
+          val2.elim_sons();
+        }
       }
       else{
-        set_son(val2.sons[0]);
-        if (father != NULL)
-          father->set_son(&val2);
+        fprintf(stderr, "Asignacion entre variables previamente ligadas\n");
       }
-    }
-    else{
-      val2.set_son(sons[0]);
-      if (val2.father != NULL)
-        val2.father->set_son(sons[0]);
     }
   }
   else{
-    /*Esta condicion debe ir priemro*/
-    if ((sons.size() + val2.sons.size()) == 2){
-      fprintf(stderr, "Asignacion de variables con valores ya definidos\n");
-      exit(1);
-    }
-    else if (sons.size() != val2.sons.size()){
+    if (campos.size() != val2.campos.size()){
       fprintf(stderr, "Las etiquetas tuvieron diferentes cantidades de campos\n");
       exit(1);
     }
   }
 }
 
+void ValorOz::set_father(ValorOz *n_father){
+  father = n_father;
+}
 
-void ValorOz::set_son(ValorOz *n_son){
-  sons.clear();
+
+void ValorOz::add_sons(ValorOz *n_son){
   sons.push_back(n_son);
+  n_son->set_father(this);
+}
+void ValorOz::add_sons(std::vector<ValorOz *> n_sons){
+  for (vector<ValorOz *>::iterator it = n_sons.begin(); it != n_sons.end(); it++) {
+    (*it)->set_father(this);
+    sons.push_back(*it);
+  }
+}
+
+
+void ValorOz::elim_sons(){
+  sons.clear();
 }
