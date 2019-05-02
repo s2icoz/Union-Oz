@@ -49,8 +49,13 @@ void ValorOz::operator =(char v){
 
 
 void ValorOz::operator =(int num){
-  if (father == NULL){
-    val = num;
+  if (val == -1){
+    if (father != NULL){
+      *father = num;
+    }
+    else{
+      val = num;
+    }
   }
   else{
     fprintf(stderr, "Asignación de una constante a un valor con referencia\n");
