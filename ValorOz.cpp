@@ -1,12 +1,27 @@
 #include <iostream>
 #include <cstdlib>
+#include <list>
+#include <algorithm>
 #include "ValorOz.h"
 
 using namespace std;
 
+bool comparar(ValorOz *val1, ValorOz *val2){
+  return (val1 > val2);
+}
+
 int prev_union(ValorOz *objetivo, ValorOz *contenedor){
-  for (int i = 0; i < contenedor->get_sons().size(); i ++) {
-    if (contenedor->get_sons()[i] == objetivo){
+/*Revisa si dos ValorOz están ligados*/
+/*Pre: objetivo != NULL && contenedor != NULL*/
+/*Pos: True si objetivo -> contenedor
+        False si !(objetivo -> contenedor)*/
+  if (!(objetivo != NULL && contenedor != NULL)){
+    fprintf(stderr, "Revisión de ligación con parámetro NULL\n");
+    exit(1);
+  }
+  list<ValorOz *>::iterator it = contenedor->get_sons().begin();
+  for (int i = 0; i < contenedor->get_sons().size(); i++, it++) {
+    if (*it == objetivo){
       return 1;
     }
   }
@@ -15,6 +30,10 @@ int prev_union(ValorOz *objetivo, ValorOz *contenedor){
 
 
 int ValorOz::get_val(){
+/*Retorna el valor de un ValorOz*/
+/*Pre: True*/
+/*Pos: -1 si Val == Vacio
+        Val si Val != Vacio*/
   if (father != NULL){
     return father->val;
   }
@@ -25,16 +44,25 @@ int ValorOz::get_val(){
 
 
 ValorOz* ValorOz::get_father(){
+/*Retorna el puntero father del ValorOz*/
+/*Pre: True*/
+/*Pos: NULL si father == NULL
+        *ValorOz si father != NULL*/
   return father;
 }
 
 
-std::vector<ValorOz *> ValorOz::get_sons(){
+list<ValorOz *> ValorOz::get_sons(){
+/*Retorna la lista de hijos del ValorOz*/
   return sons;
 }
 
 
 void ValorOz::operator =(char v){
+/*Da el valor de vacio al ValorOz*/
+/*Pre: El valor no debe tener un valor asignado, la convencion de vacio
+      debe ser '_'*/
+/*Pos: ...*/
   if (val == -1){
     if (v != '_'){
       fprintf(stderr, "Asignación desconocida\n");
@@ -49,7 +77,11 @@ void ValorOz::operator =(char v){
 
 
 void ValorOz::operator =(int num){
-  if (val == -1){
+/*Liga el ValorOz a un entero*/
+/*Pre: El val de ValorOz debe ser el mismo parámetro o vacio*/
+/*Pos: val == num*/
+  if (get_val() == num);
+  else if (val == -1){
     if (father != NULL){
       *father = num;
     }
@@ -67,49 +99,68 @@ void ValorOz::operator =(int num){
 
 
 void ValorOz::operator =(ValorOz &val2){
-  if (this == &val2){
-    fprintf(stderr, "Unión de una variable a si misma\n");
+/*Liga el ValorOz con otro ValorOz*/
+/*Pre: No pueden ambos ValorOz estar previamente ligados a otros ValorOz
+      que no sean el otro ValorOz de la operación; a no ser que compartan un
+      val diferente a vacio. Además para registros, deben tener en común:
+      etiquetas, número de campos y campos*/
+/*Pos: ValorOz ligado a Val2*/
+  if (this == &val2 || get_val() == val2.get_val() && get_val() != -1){
+    /*Caso en el que se trate de ligar un ValorOz a si mismo, o a alguien
+      ligado a él, o se iguale a un ValorOz con quien comparta val y que este
+      sea diferente a vacio*/
+    //fprintf(stderr, "Unión de una variable a si misma\n");
   }
-  if (campos.size() > 0 && val2.campos.size() > 0 &&
+  else if (campos.size() > 0 && val2.campos.size() > 0 &&
       campos.size() == val2.campos.size()){
     /*Caso etiquetas*/
-    /*Mas de un campo e igual cantidad de campos
-    /*Etiquetas de 1 solo campo seran manejadas como variables normales*/
+    /*Mas de un campo e igual cantidad de campos*/
   }
-  /*Condicion: hace que nunca se haga un caso de asignacion de variables
-  con valores ya asignados normales*/
   else if (campos.size() + val2.campos.size() == 0){
     ValorOz *temp_father;
+    //Comprueba si ya están ligados entre si
     if (!prev_union(this, &val2) && !prev_union(&val2, this)){
+      //Emparentamiento de izquierda a derecha
       if (father == NULL){
-        if (val2.get_father() && val2.get_sons().size()){
-          fprintf(stderr, "Asignacion entre variables previamente ligadas\n");
-          exit(1);
-        }
-        //Emparentamiento de izquierda a derecha
+        /*Si el otro tiene father se le pasaran los hijos del ValorOz al
+          father de val2, de lo contrario se pasaran a val2*/
         val2.get_father()?temp_father = val2.get_father(): temp_father = &val2;
-        set_father(temp_father);
+        if (get_val() != -1){
+          *(temp_father) = get_val();
+        }
+        else if (val2.get_val() != -1)
+          *(temp_father) = val2.get_val();
+
         temp_father->add_sons(this);
         if (sons.size()){
           temp_father->add_sons(get_sons());
           elim_sons();
         }
+        /*Si val2 tiene father el ValorOz se liga al father de val2, de lo
+          contrario se ligara a val2*/
+        set_father(temp_father);
       }
+      //Emparentamiento de derecha a izquierda
       else if (val2.father == NULL){
-        if(get_sons().size()){
-          fprintf(stderr, "Asignacion entre variables previamente ligadas\n");
-          exit(1);
-        }
-        //Emparentamiento de derecha a izquierda
+        /*Si el ValorOz tiene father se le pasaran los hijos de val2 al
+          father, de lo contrario se pasaran al ValorOz*/
         get_father()?temp_father = get_father(): temp_father = this;
-        val2.set_father(temp_father);
+        if (get_val() != -1)
+          *(temp_father) = get_val();
+        else if (val2.get_val() != -1)
+          *(temp_father) = val2.get_val();
+
         temp_father->add_sons(&val2);
-        if (sons.size()){
+        if (val2.sons.size()){
           temp_father->add_sons(val2.get_sons());
           val2.elim_sons();
         }
+        /*Si el ValorOz tiene father val2 se liga al father del ValorOz, de lo
+          contrario se ligara a ValorOz*/
+        val2.set_father(temp_father);
       }
       else{
+        //Casos de error
         fprintf(stderr, "Asignacion entre variables previamente ligadas\n");
       }
     }
@@ -123,22 +174,44 @@ void ValorOz::operator =(ValorOz &val2){
 }
 
 void ValorOz::set_father(ValorOz *n_father){
-  father = n_father;
+/*Se le da un valor al father del ValorOz*/
+/*Pre: n_father != NULL*/
+/*Pos: father = n_father*/
+  if (n_father != NULL){
+    father = n_father;
+  }
 }
 
 
 void ValorOz::add_sons(ValorOz *n_son){
-  sons.push_back(n_son);
-  n_son->set_father(this);
+/*Se agrega un ValorOz al lista de hijos del ValorOz*/
+/*Pre: n_son != NULL*/
+/*Pos: sons = <n_son> si sons == <>
+       sons = <...n_son...> si sons != <>*/
+  if (n_son != NULL){
+    sons.push_back(n_son);
+    n_son->set_father(this);
+  }
 }
-void ValorOz::add_sons(std::vector<ValorOz *> n_sons){
-  for (vector<ValorOz *>::iterator it = n_sons.begin(); it != n_sons.end(); it++) {
-    (*it)->set_father(this);
-    sons.push_back(*it);
+void ValorOz::add_sons(list<ValorOz *> n_sons){
+/*Se añade un lista de ValorOz al lista de hijos del ValorOz*/
+/*Pre: n_sons != <>*/
+/*Pos: sons = <n_sons> si sons == <>
+       sons = <...n_sons...> si sons != <>*/
+  if (!n_sons.empty()){
+    for (list<ValorOz *>::iterator it = n_sons.begin(); it != n_sons.end(); it++) {
+      (*it)->set_father(this);
+      sons.push_back(*it);
+    }
   }
 }
 
 
 void ValorOz::elim_sons(){
-  sons.clear();
+/*Se elimian todos los hijos del ValorOz*/
+/*Pre: sons != <>*/
+/*Pos: sons = <>*/
+  if (!sons.empty()){
+    sons.clear();
+  }
 }
