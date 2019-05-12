@@ -6,10 +6,6 @@
 
 using namespace std;
 
-bool comparar(ValorOz *val1, ValorOz *val2){
-  return (val1 > val2);
-}
-
 int prev_union(ValorOz *objetivo, ValorOz *contenedor){
 /*Revisa si dos ValorOz están ligados*/
 /*Pre: objetivo != NULL && contenedor != NULL*/
@@ -29,11 +25,20 @@ int prev_union(ValorOz *objetivo, ValorOz *contenedor){
 }
 
 
+ValorOz::ValorOz(string n_key){
+/*Constructor incial de ValorOz que le concede una clave*/
+/*Pre: n_key*/
+/*Pos: ValorOz {key = n_key, val = none, father = NULL}*/
+  key = n_key;
+  val = vacio;
+  father = NULL;
+}
+
 void ValorOz::set_father(ValorOz *n_father){
 /*Se le da un valor al father del ValorOz*/
-/*Pre: n_father != NULL*/
+/*Pre: n_father == NULL*/
 /*Pos: father = n_father*/
-  if (n_father != NULL){
+  if (n_father != NULL && n_father != this){
     father = n_father;
   }
 }
@@ -44,9 +49,12 @@ void ValorOz::add_sons(ValorOz *n_son){
 /*Pre: n_son != NULL*/
 /*Pos: sons = <n_son> si sons == <>
        sons = <...n_son...> si sons != <>*/
+  int i=0;
   if (n_son != NULL){
-    sons.push_back(n_son);
+    int i = 0;
+    sons.push_front(n_son);
     n_son->set_father(this);
+    i = 0;
   }
 }
 void ValorOz::add_sons(list<ValorOz *> n_sons){
@@ -55,9 +63,9 @@ void ValorOz::add_sons(list<ValorOz *> n_sons){
 /*Pos: sons = <n_sons> si sons == <>
        sons = <...n_sons...> si sons != <>*/
   if (!n_sons.empty()){
-    for (list<ValorOz *>::iterator it = n_sons.begin(); it != n_sons.end(); it++) {
-      (*it)->set_father(this);
-      sons.push_back(*it);
+    int i = 0;
+    for (list<ValorOz *>::iterator it = n_sons.begin(); i < n_sons.size(); it++, i++) {
+      add_sons(*it);
     }
   }
 }
@@ -73,65 +81,11 @@ void ValorOz::elim_sons(){
 }
 
 
-void ValorOz::set_campo(string llave, ValorOz *n_ValorOz){
-  if (etiqueta != ""){
-    campos.insert(cam(llave, n_ValorOz));
-  }
-  else{
-    fprintf(stderr, "Operacion de registro en una variable simple\n");
-    exit(1);
-  }
-}
-
-
-void ValorOz::elim_campo(string llave){
-  if (etiqueta != ""){
-    bool find = false;
-    int i = 0;
-    for (list<string>::iterator it = get_campos_llaves().begin(); i < get_campos_llaves().size(); i++, it++) {
-      if (*it == llave){
-        find = true;
-      }
-    }
-    if (find){
-      campos.erase(llave);
-    }
-    else{
-      fprintf(stderr, "Eliminacion de un campo inexistente en el ValorOz\n");
-    }
-  }
-  else{
-    fprintf(stderr, "Operacion de registro en una variable simple\n");
-    exit(1);
-  }
-}
-
-
-int ValorOz::get_val(){
-/*Retorna el valor de un ValorOz*/
-/*Pre: True*/
-/*Pos: -1 si Val == Vacio
-        Val si Val != Vacio*/
-  if (father != NULL){
-    return father->val;
-  }
-  else{
-    return val;
-  }
-}
-
-
-string ValorOz::get_etiqueta(){
-/*Retorna la etiqueta de un ValorOz*/
-/*Pre: etiqueta != vacio*/
-/*Pos: "" si etiqueta == Vacio
-        etiqueta si etiqueta != Vacio*/
-  if (etiqueta != ""){
-    return etiqueta;
-  }
-  else{
-    return "";
-  }
+string ValorOz::get_key(){
+/*Funcion que consulta la clave de un ValorOz*/
+/*Pre: key != ""*/
+/*Pos: key*/
+  return key;
 }
 
 
@@ -139,8 +93,11 @@ ValorOz* ValorOz::get_father(){
 /*Retorna el puntero father del ValorOz*/
 /*Pre: True*/
 /*Pos: NULL si father == NULL
-        *ValorOz si father != NULL*/
-  return father;
+       *ValorOz si father != NULL*/
+  if(father)
+    return father;
+  else
+    return NULL;
 }
 
 
@@ -150,40 +107,28 @@ list<ValorOz *> ValorOz::get_sons(){
 }
 
 
-list<string> ValorOz::get_campos_llaves(){
-  list<string> llaves;
-  for (map<string, ValorOz *>::iterator it = campos.begin(); it != campos.end();
-   it++) {
-    llaves.push_back(it->first);
-  }
-  return llaves;
+void ValorOz::get_val(char &ans){
+/*Retorna el val del ValorOz*/
+  ans = val;
 }
 
 
-ValorOz* ValorOz::get_campo_valor(string llave){
-  if (etiqueta != ""){
-    bool find = false;
-    int i = 0;
-    for (list<string>::iterator it = get_campos_llaves().begin(); i < get_campos_llaves().size(); i++, it++) {
-      if (*it == llave){
-        return campos[llave];
-      }
-    }
-    fprintf(stderr, "Eliminacion de un campo inexistente en el ValorOz\n");
+void ValorOz::get_val(comparator &ans){
+  if (father){
+    father->get_val(ans);
   }
   else{
-    fprintf(stderr, "Operacion de registro en una variable simple\n");
-    exit(1);
+    ans = val;
   }
 }
 
 
-void ValorOz::operator =(char v){
-  /*Da el valor de vacio al ValorOz*/
-  /*Pre: El valor no debe tener un valor asignado, la convencion de vacio
-  debe ser '_'*/
-  /*Pos: ...*/
-  if (val == -1){
+void ValorOz::set_val(char v){
+/*Da el valor de vacio al ValorOz*/
+/*Pre: El valor no debe tener un valor asignado, la convencion de vacio
+debe ser '_'*/
+/*Pos: ()*/
+  if (val == '_'){
     if (v != '_'){
       fprintf(stderr, "Asignación desconocida\n");
       exit(1);
@@ -196,119 +141,382 @@ void ValorOz::operator =(char v){
 }
 
 
-void ValorOz::operator =(int num){
-  /*Liga el ValorOz a un entero*/
-  /*Pre: El val de ValorOz debe ser el mismo parámetro o vacio*/
-  /*Pos: val == num*/
-  if (etiqueta == ""){
-    if (get_val() == num);
-    else if (val == -1){
-      if (father != NULL){
-        *father = num;
+bool ValorOz::empty(){
+  if (father){
+    return father->empty();
+  }
+  else{
+    return (val == vacio);
+  }
+}
+
+
+void ValorOz::consultar_val(){
+  cout << val;
+}
+
+/*===ValorOz_Int===*/
+
+ValorOz_Int::ValorOz_Int(string n_key, int entero) : ValorOz(n_key){
+/*Se hace el constructor de ValorOz con la misma llave n_key y se le cambia el
+val al int entero*/
+/*Pre: n_key, entero*/
+/*Pos: ValorOz_Int {key = n_key, val = entero, father = NULL}*/
+  val = entero;
+};
+
+
+void ValorOz_Int::get_val(int &ans){
+/*Le da el valor interno del ValorOz_Int a un entero*/
+/*Pre: ans*/
+/*Pos: ans = val*/
+  ans = val;
+}
+
+
+void ValorOz_Int::get_val(comparator &ans){
+/*Le da el valor interno del ValorOz_Int a un comparator*/
+/*Pre: ans sin haber sido afectado*/
+/*Pos: ans = val*/
+  if (father){
+    father->get_val(ans);
+  }
+  else{
+    ans = val;
+  }
+}
+
+
+void ValorOz_Int::set_val(int num){
+/*Le da un valor al val del ValorOz_Int*/
+/*Pre: val == 0*/
+/*Pos: val = num*/
+  if (val == num);
+  else if (val == 0){
+    val = num;
+  }
+  else{
+    fprintf(stderr, "Asignación de una constante a un valor con referencia\n");
+    exit(1);
+  }
+}
+
+
+void ValorOz_Int::set_val(comparator &comp){
+  /*Iguala el val del ValorOz_Int al valor de un comparator*/
+  /*Pre: val == vacio*/
+  /*Pos: val = comparator->entero*/
+  if (val == comp.un_comp.i);
+  else if (val == 0){
+    val = comp.un_comp.i;
+  }
+  else{
+    fprintf(stderr, "Asignación de una constante a un valor con referencia\n");
+    exit(1);
+  }
+}
+
+
+bool ValorOz_Int::empty(){
+/*Observa si un ValorOz_Int está vacio*/
+/*Pre: True*/
+/*Pos: True si val == vacio
+       False si val != vacio*/
+  return (val == vacio);
+}
+
+
+void ValorOz_Int::consultar_val(){
+/*Imprime el val del ValorOz_Int*/
+/*Pre: True*/
+/*Pos: val por consola*/
+  cout << val;
+}
+
+/*===ValorOz_Float===*/
+
+ValorOz_Float::ValorOz_Float(string n_key, float flotante) : ValorOz(n_key){
+/*Se hace el constructor de ValorOz con la misma llave n_key y se le cambia el
+val al float flotante*/
+/*Pre: n_key, flotante*/
+/*Pos: ValorOz_Float {key = n_key, val = flotante, father = NULL}*/
+  val = flotante;
+}
+
+float ValorOz_Float::get_val(float &ans){
+/*Le da el valor interno del ValorOz_Float a un float*/
+/*Pre: ans*/
+/*Pos: ans = val*/
+  ans = val;
+}
+
+
+void ValorOz_Float::get_val(comparator &ans){
+/*Le da el valor interno del ValorOz_Float a un comparator*/
+/*Pre: ans sin haber sido afectado*/
+/*Pos: ans = val*/
+  if (father){
+    father->get_val(ans);
+  }
+  else{
+    ans = val;
+  }
+}
+
+
+void ValorOz_Float::set_val(float num){
+/*Le da un valor al val del ValorOz_Float*/
+/*Pre: val == 0*/
+/*Pos: val = num*/
+  if (val == num);
+  else if (val == 0){
+    val = num;
+  }
+  else{
+    fprintf(stderr, "Asignación de una constante a un valor con referencia\n");
+    exit(1);
+  }
+}
+
+
+void ValorOz_Float::set_val(comparator &comp){
+/*Iguala el val del ValorOz_Float al valor de un comparator*/
+/*Pre: val == vacio*/
+/*Pos: val = comparator->flotante*/
+  if (val == comp.un_comp.f);
+  else if (val == 0){
+    val = comp.un_comp.f;
+  }
+  else{
+    fprintf(stderr, "Asignación de una constante a un valor con referencia\n");
+    exit(1);
+  }
+}
+
+
+bool ValorOz_Float::empty(){
+/*Observa si un ValorOz_Float está vacio*/
+/*Pre: True*/
+/*Pos: True si val == vacio
+       False si val != vacio*/
+  return (val == vacio);
+}
+
+void ValorOz_Float::consultar_val(){
+/*Imprime el val del ValorOz_Float*/
+/*Pre: True*/
+/*Pos: val por consola*/
+  cout << val;
+}
+
+/*=====Almacen=====*/
+
+bool Almacen::in_almacen(string key){
+/*Determina si existe algun ValorOz para la clave key en el Almacen*/
+/*Pre: key*/
+/*Pos: True si key pertenece a las claves de Almacen
+       False si key no pertenece a las claves del Almacen*/
+  int i = 0;
+  for (map<string, ValorOz *>::iterator it = variables.begin();
+   it != variables.end() && it->first != key;
+    it++, i++){}
+  return (i != variables.size());
+}
+
+
+bool Almacen::is_empty(string key){
+/*Determina si un ValorOz del Almacen está vacio*/
+/*Pre: Existe ValorOz->key == key && key pertenece a variables->keys*/
+/*Pos: /*Pos: True si ValorOz->val == vacio
+       False si ValorOz->val != vacio*/
+  if(!in_almacen(key)){
+    fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
+    exit(1);
+  }
+  return variables[key]->empty();
+}
+
+
+void Almacen::agregar_variable(string n_key){
+/*Agrega un nuevo ValorOz al Almacen*/
+/*Pre: !(Existe ValorOz->key == key && key pertenece a variables->keys)*/
+/*Pos Almacen = {...(n_key, nuevo ValorOz)...}*/
+  for (map<string, ValorOz *>::iterator it = variables.begin();
+   it != variables.end(); it++){
+     if (it->first == n_key){
+       fprintf(stderr, "Redefinición de un ValorOz existente en el Almacen\n");
+       exit(1);
+     }
+  }
+  ValorOz *n_var;
+  n_var = new ValorOz(n_key);
+  variables[n_key] = n_var;
+}
+
+
+void Almacen::agregar_variable(string n_key, int entero){
+/*Agrega un nuevo ValorOz al Almacen*/
+/*Pre: !(Existe ValorOz->key == key && key pertenece a variables->keys), entero*/
+/*Pos Almacen = {...(n_key, nuevo ValorOz_Int)...}
+      ValorOz_Int->val = entero*/
+  for (map<string, ValorOz *>::iterator it = variables.begin();
+   it != variables.end(); it++){
+     if (it->first == n_key){
+       fprintf(stderr, "Redefinición de un ValorOz existente en el Almacen\n");
+       exit(1);
+     }
+  }
+  ValorOz_Int *n_var;
+  n_var = new ValorOz_Int(n_key, entero);
+  variables[n_key] = n_var;
+}
+
+
+void Almacen::agregar_variable(string n_key, float flotante){
+/*Agrega un nuevo ValorOz al Almacen*/
+/*Pre: !(Existe ValorOz->key == key && key pertenece a variables->keys)*/
+/*Pos Almacen = {...(n_key, nuevo ValorOz_Float)...}
+      ValorOz_Float->val = flotante*/
+  for (map<string, ValorOz *>::iterator it = variables.begin();
+   it != variables.end(); it++){
+     if (it->first == n_key){
+       fprintf(stderr, "Redefinición de un ValorOz existente en el Almacen\n");
+       exit(1);
+     }
+  }
+  ValorOz_Float *n_var;
+  n_var = new ValorOz_Float(n_key, flotante);
+  variables[n_key] = n_var;
+}
+
+
+void Almacen::print_almacen(){
+/*Imprime la informacion de cada elemento del Almacen*/
+/*Pre: True*/
+/*Pos: informacion de cada elemento del Almacen por consola*/
+  for (map<string, ValorOz *>::iterator it = variables.begin();
+   it != variables.end(); it++){
+     if (it->second->get_father()){
+       cout << it->first << " -> " << it->second->get_father()->get_key() << endl;
+     }
+     else{
+       cout << it->first << ' ';
+       it->second->consultar_val();
+       cout << endl;
+     }
+     /*int i = 0;
+     for(list<ValorOz *>::iterator jt = it->second->get_sons().begin(); i < it->second->get_sons().size(); ++jt, i++){
+       cout << (*jt)->get_key();
+     }
+     cout << "--------" << endl;*/
+  }
+}
+
+
+bool Almacen::equal_vals(string key1, string key2){
+/*Determina si dos ValorOz del Almacen tienen el mismo ValorOz*/
+/*Pre: (key1, key2) e variables*/
+/*Pos: True si valor de key1 == valor de key2
+       False si valor de key1 != valor de key2*/
+  if(in_almacen(key1) && in_almacen(key2)){
+    comparator comp1, comp2;
+    variables[key1]->get_val(comp1);
+    variables[key2]->get_val(comp2);
+    return (comp1 == comp2);
+  }
+  fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
+  exit(1);
+}
+
+
+void Almacen::unificar(string val1, string val2){
+/*Liga dos ValorOz del Almacen*/
+/*Pre (val1 == vacio || val2 == vacio) || (val1->val == val2->val)*/
+/*Pos val1 <-> val2*/
+  if(!in_almacen(val1) || !in_almacen(val2)){
+    fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
+    exit(1);
+  }
+  ValorOz *temp_father1, *temp_father2;
+
+  if (is_empty(val1)){
+    //hacer que val2 sea el padre;
+    if (prev_union(variables[val1], variables[val2]) ||
+     prev_union(variables[val2], variables[val1])){}
+    else{
+      /*Asignación temp_father*/
+      if (variables[val2]->get_father())
+        temp_father2 = variables[val2]->get_father();
+      else
+        temp_father2 = variables[val2];
+      //Cambio de ValorOz
+      /*if (!is_empty(val2)){
+        comparator comp;
+        temp_father2->get_val(comp);
+        variables.erase(val1);
+        if(comp.type == "int"){
+          //ValorOz_Int *n_ValorOz = new ValorOz_Int(val2, comp)
+          agregar_variable(val1, comp.un_comp.i);
+        }
+        if (comp.type == "float"){
+          //ValorOz_Float *n_ValorOz = new ValorOz_Float(val2, comp)
+          agregar_variable(val1, comp.un_comp.f);
+        }
+      }*/
+      /*Asignación temp_father*/
+      if (variables[val1]->get_father())
+        temp_father1 = variables[val1]->get_father();
+      else
+        temp_father1 = variables[val1];
+
+      temp_father2->add_sons(temp_father1);
+      if (temp_father1->get_sons().size()){
+        temp_father2->add_sons(temp_father1->get_sons());
+        temp_father1->elim_sons();
       }
+    }
+  }
+  else{
+    if (is_empty(val2) || equal_vals(val1, val2)){
+      if (prev_union(variables[val1], variables[val2]) ||
+       prev_union(variables[val2], variables[val1])){}
       else{
-        val = num;
+        //hacer que val1 sea el padre;
+        /*Asignación temp_father*/
+        if (variables[val1]->get_father())
+          temp_father1 = variables[val1]->get_father();
+        else
+          temp_father1 = variables[val1];
+        //Cambio de ValorOz
+        /*if (is_empty(val2)){
+          comparator comp;
+          temp_father1->get_val(comp);
+          variables.erase(val2);
+          if(comp.type == "int"){
+            //ValorOz_Int *n_ValorOz = new ValorOz_Int(val2, comp)
+            agregar_variable(val2, comp.un_comp.i);
+          }
+          if (comp.type == "float"){
+            //ValorOz_Float *n_ValorOz = new ValorOz_Float(val2, comp)
+            agregar_variable(val2, comp.un_comp.f);
+          }
+        }*/
+
+        /*Asignación temp_father*/
+        if (variables[val2]->get_father())
+          temp_father2 = variables[val2]->get_father();
+        else
+          temp_father2 = variables[val2];
+        temp_father1->add_sons(temp_father2);
+        if (temp_father2->get_sons().size()){
+          temp_father1->add_sons(temp_father2->get_sons());
+          temp_father2->elim_sons();
+        }
       }
     }
     else{
-      fprintf(stderr, "Asignación de una constante a un valor con referencia\n");
-      exit(1);
-      /*referencia => que apunta a alguien,
-      /*referenciado => que alguien apunta a él.*/
-    }
-  }
-  else{
-    fprintf(stderr, "Asignación de una constante a un registro\n");
-    exit(1);
-  }
-}
-
-
-void ValorOz::operator =(ValorOz &val2){
-  /*Liga el ValorOz con otro ValorOz*/
-  /*Pre: No pueden ambos ValorOz estar previamente ligados a otros ValorOz
-  que no sean el otro ValorOz de la operación; a no ser que compartan un
-  val diferente a vacio. Además para registros, deben tener en común:
-  etiquetas, número de campos y campos*/
-  /*Pos: ValorOz ligado a Val2*/
-  if (this == &val2 || get_val() == val2.get_val() && get_val() != -1){
-    /*Caso en el que se trate de ligar un ValorOz a si mismo, o a alguien
-    ligado a él, o se iguale a un ValorOz con quien comparta val y que este
-    sea diferente a vacio*/
-    //fprintf(stderr, "Unión de una variable a si misma\n");
-  }
-  else if (campos.size() > 0 && val2.campos.size() > 0 &&
-  campos.size() == val2.campos.size()){
-    /*Caso etiquetas*/
-    /*Mas de un campo e igual cantidad de campos*/
-  }
-  else if (campos.size() + val2.campos.size() == 0){
-    ValorOz *temp_father;
-    //Comprueba si ya están ligados entre si
-    if (!prev_union(this, &val2) && !prev_union(&val2, this)){
-      //Emparentamiento de izquierda a derecha
-      if (father == NULL){
-        /*Si el otro tiene father se le pasaran los hijos del ValorOz al
-        father de val2, de lo contrario se pasaran a val2*/
-        val2.get_father()?temp_father = val2.get_father(): temp_father = &val2;
-        if (get_val() != -1){
-          *(temp_father) = get_val();
-        }
-        else if (val2.get_val() != -1)
-        *(temp_father) = val2.get_val();
-
-        temp_father->add_sons(this);
-        if (sons.size()){
-          temp_father->add_sons(get_sons());
-          elim_sons();
-        }
-        /*Si val2 tiene father el ValorOz se liga al father de val2, de lo
-        contrario se ligara a val2*/
-        set_father(temp_father);
-      }
-      //Emparentamiento de derecha a izquierda
-      else if (val2.father == NULL){
-        /*Si el ValorOz tiene father se le pasaran los hijos de val2 al
-        father, de lo contrario se pasaran al ValorOz*/
-        get_father()?temp_father = get_father(): temp_father = this;
-        if (get_val() != -1)
-        *(temp_father) = get_val();
-        else if (val2.get_val() != -1)
-        *(temp_father) = val2.get_val();
-
-        temp_father->add_sons(&val2);
-        if (val2.sons.size()){
-          temp_father->add_sons(val2.get_sons());
-          val2.elim_sons();
-        }
-        /*Si el ValorOz tiene father val2 se liga al father del ValorOz, de lo
-        contrario se ligara a ValorOz*/
-        val2.set_father(temp_father);
-      }
-      else{
-        //Casos de error
-        fprintf(stderr, "Asignacion entre variables previamente ligadas\n");
-        exit(1);
-      }
-    }
-  }
-  else{
-    if (campos.size() != val2.campos.size()){
-      fprintf(stderr, "Las etiquetas tuvieron diferentes cantidades de campos\n");
+      fprintf(stderr, "Unificación de variables con valores diferentes\n");
       exit(1);
     }
-  }
-}
-
-void ValorOz::operator =(string n_etiqueta){
-  /*Se asigna un nombre a la etiqueta del ValorOz*/
-  /*Pre: No puede estar ligado a algo diferente a vacio*/
-  /*Pos: etiqueta = n_etiqueta*/
-  if (get_val() ==  -1){
-    etiqueta = n_etiqueta;
-  }
-  else{
-    fprintf(stderr, "Asignacion de etiqueta a un ValorOz con valor ya definido\n");
-    exit(1);
   }
 }
