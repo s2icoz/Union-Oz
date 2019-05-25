@@ -319,7 +319,7 @@ bool Almacen::in_almacen(string key){
   int i = 0;
   for (map<string, ValorOz *>::iterator it = variables.begin();
    it != variables.end() && it->first != key;
-    it++, i++){}
+    it++, i++);
   return (i != variables.size());
 }
 
@@ -387,6 +387,68 @@ void Almacen::agregar_variable(string n_key, float flotante){
   ValorOz_Float *n_var;
   n_var = new ValorOz_Float(n_key, flotante);
   variables[n_key] = n_var;
+}
+
+
+void Almacen::set_val(string key, int n_val){
+  if (!in_almacen(key)){
+    fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
+    exit(1);
+  }
+  comparator comp;
+  variables[key]->get_val(comp);
+  if (is_empty(key)){
+    // Se supone que solo hay ValorOz_Int o Float con valores != vacio ya que
+    // el cambio de valor es lo que supone su creacion
+    if (comp.type == "char"){
+      ValorOz_Int *n_Int;
+      n_Int = new ValorOz_Int(variables[key]->get_key(), n_val);
+      n_Int->set_father(variables[key]->get_father());
+      n_Int->add_sons(variables[key]->get_sons());
+      delete variables[key];
+      variables[key] = n_Int;
+    }
+    else{
+      if (n_val != comp.un_comp.i){
+        fprintf(stderr, "Asignación de valor a un ValorOz no vacio\n");
+        exit(1);
+      }
+    }
+  }
+  else{
+    fprintf(stderr, "Asignación de valor a un ValorOz no vacio\n");
+    exit(1);
+  }
+}
+
+
+void Almacen::set_val(string key, float n_val){
+  if (!in_almacen(key)){
+    fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
+    exit(1);
+  }
+  comparator comp;
+  variables[key]->get_val(comp);
+  if (is_empty(key)){
+    if (comp.type == "char"){
+      ValorOz_Float *n_Float;
+      n_Float = new ValorOz_Float(variables[key]->get_key(), n_val);
+      n_Float->set_father(variables[key]->get_father());
+      n_Float->add_sons(variables[key]->get_sons());
+      delete variables[key];
+      variables[key] = n_Float;
+    }
+    else{
+      fprintf(stderr, "Asignación de valor a un ValorOz no vacio\n");
+      exit(1);
+    }
+  }
+  else{
+    if (n_val != comp.un_comp.f){
+      fprintf(stderr, "Asignación de valor a un ValorOz no vacio\n");
+      exit(1);
+    }
+  }
 }
 
 

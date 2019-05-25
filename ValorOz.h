@@ -110,6 +110,13 @@ class ValorOz_Float : public ValorOz{
 };
 
 
+// class ValorOz_Reg : public ValorOz{
+// 	private:
+// 		string etiqueta;
+// 		map<string>
+// };
+
+
 class Almacen{
   private:
     map<string, ValorOz *> variables;
@@ -117,6 +124,9 @@ class Almacen{
     void agregar_variable(string n_key);
     void agregar_variable(string n_key, int entero);
     void agregar_variable(string n_key, float flotante);
+
+		void set_val(string key, int n_val);
+		void set_val(string key, float n_val);
 
     bool in_almacen(string key);
     bool is_empty(string key);
