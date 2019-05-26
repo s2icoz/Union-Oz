@@ -113,7 +113,7 @@ void ValorOz::get_val(char &ans){
 }
 
 
-void ValorOz::get_val(comparator &ans){
+void ValorOz::get_val(Comparator &ans){
   if (father){
     father->get_val(ans);
   }
@@ -174,8 +174,8 @@ void ValorOz_Int::get_val(int &ans){
 }
 
 
-void ValorOz_Int::get_val(comparator &ans){
-/*Le da el valor interno del ValorOz_Int a un comparator*/
+void ValorOz_Int::get_val(Comparator &ans){
+/*Le da el valor interno del ValorOz_Int a un Comparator*/
 /*Pre: ans sin haber sido afectado*/
 /*Pos: ans = val*/
   if (father){
@@ -202,10 +202,10 @@ void ValorOz_Int::set_val(int num){
 }
 
 
-void ValorOz_Int::set_val(comparator &comp){
-  /*Iguala el val del ValorOz_Int al valor de un comparator*/
+void ValorOz_Int::set_val(Comparator &comp){
+  /*Iguala el val del ValorOz_Int al valor de un Comparator*/
   /*Pre: val == vacio*/
-  /*Pos: val = comparator->entero*/
+  /*Pos: val = Comparator->entero*/
   if (val == comp.un_comp.i);
   else if (val == 0){
     val = comp.un_comp.i;
@@ -251,8 +251,8 @@ float ValorOz_Float::get_val(float &ans){
 }
 
 
-void ValorOz_Float::get_val(comparator &ans){
-/*Le da el valor interno del ValorOz_Float a un comparator*/
+void ValorOz_Float::get_val(Comparator &ans){
+/*Le da el valor interno del ValorOz_Float a un Comparator*/
 /*Pre: ans sin haber sido afectado*/
 /*Pos: ans = val*/
   if (father){
@@ -279,10 +279,10 @@ void ValorOz_Float::set_val(float num){
 }
 
 
-void ValorOz_Float::set_val(comparator &comp){
-/*Iguala el val del ValorOz_Float al valor de un comparator*/
+void ValorOz_Float::set_val(Comparator &comp){
+/*Iguala el val del ValorOz_Float al valor de un Comparator*/
 /*Pre: val == vacio*/
-/*Pos: val = comparator->flotante*/
+/*Pos: val = Comparator->flotante*/
   if (val == comp.un_comp.f);
   else if (val == 0){
     val = comp.un_comp.f;
@@ -307,6 +307,79 @@ void ValorOz_Float::consultar_val(){
 /*Pre: True*/
 /*Pos: val por consola*/
   cout << val;
+}
+
+/*====ValorOz_Reg====*/
+Campo::Campo(string n_name){
+  name = n_name;
+  type = "vacio";
+}
+string Campo::get_val(){
+  return val;
+}
+void Campo::cons_val(){
+  cout << val;
+}
+
+Campo_Int::Campo_Int(string n_name, int n_entero) : Campo(n_name){
+  val = n_entero;
+  type = "int";
+}
+void Campo_Int::cons_val(){
+  cout << name << ':' << val;
+}
+
+Campo_Float::Campo_Float(string n_name, float n_flotante) : Campo(n_name){
+  val = n_flotante;
+  type = "float";
+}
+void Campo_Float::cons_val(){
+  cout << name << ':' << val;
+}
+
+Campo_Key::Campo_Key(string n_name, string key) : Campo(n_name){
+  val = key;
+  type = "key";
+}
+string Campo_Key::get_val(){
+  return val;
+}
+void Campo_Key::cons_val(){
+  cout << name << ':' << val;
+}
+
+Campo_Oz::Campo_Oz(string n_name, ValorOz *n_Oz) : Campo(n_name){
+  val = n_Oz;
+  type = "Oz";
+}
+void Campo_Oz::cons_val(){
+  val->consultar_val();
+}
+
+ValorOz_Reg::ValorOz_Reg(string n_key, string n_etiqueta, list<Campo *> n_campos) : ValorOz(n_key){
+  etiqueta = n_etiqueta;
+  campos = n_campos;
+}
+
+
+string ValorOz_Reg::get_etiqueta(){
+  return etiqueta;
+}
+
+
+list<Campo *> ValorOz_Reg::get_campos(){
+  return campos;
+}
+
+
+void ValorOz_Reg::consultar_val(){
+  cout << etiqueta << '(';
+  int i = 0;
+  for (auto it = campos.begin(); i < campos.size(); it++, i++) {
+    (*it)->cons_val();
+    if (i < campos.size() - 1)cout << ", ";
+  }
+  cout << ')';
 }
 
 /*=====Almacen=====*/
@@ -341,12 +414,9 @@ void Almacen::agregar_variable(string n_key){
 /*Agrega un nuevo ValorOz al Almacen*/
 /*Pre: !(Existe ValorOz->key == key && key pertenece a variables->keys)*/
 /*Pos Almacen = {...(n_key, nuevo ValorOz)...}*/
-  for (map<string, ValorOz *>::iterator it = variables.begin();
-   it != variables.end(); it++){
-     if (it->first == n_key){
-       fprintf(stderr, "Redefinición de un ValorOz existente en el Almacen\n");
-       exit(1);
-     }
+  if (in_almacen(n_key)){
+    fprintf(stderr, "Redefinición de un ValorOz existente en el Almacen\n");
+    exit(1);
   }
   ValorOz *n_var;
   n_var = new ValorOz(n_key);
@@ -359,12 +429,9 @@ void Almacen::agregar_variable(string n_key, int entero){
 /*Pre: !(Existe ValorOz->key == key && key pertenece a variables->keys), entero*/
 /*Pos Almacen = {...(n_key, nuevo ValorOz_Int)...}
       ValorOz_Int->val = entero*/
-  for (map<string, ValorOz *>::iterator it = variables.begin();
-   it != variables.end(); it++){
-     if (it->first == n_key){
-       fprintf(stderr, "Redefinición de un ValorOz existente en el Almacen\n");
-       exit(1);
-     }
+  if (in_almacen(n_key)){
+    fprintf(stderr, "Redefinición de un ValorOz existente en el Almacen\n");
+    exit(1);
   }
   ValorOz_Int *n_var;
   n_var = new ValorOz_Int(n_key, entero);
@@ -377,12 +444,9 @@ void Almacen::agregar_variable(string n_key, float flotante){
 /*Pre: !(Existe ValorOz->key == key && key pertenece a variables->keys)*/
 /*Pos Almacen = {...(n_key, nuevo ValorOz_Float)...}
       ValorOz_Float->val = flotante*/
-  for (map<string, ValorOz *>::iterator it = variables.begin();
-   it != variables.end(); it++){
-     if (it->first == n_key){
-       fprintf(stderr, "Redefinición de un ValorOz existente en el Almacen\n");
-       exit(1);
-     }
+  if (in_almacen(n_key)){
+    fprintf(stderr, "Redefinición de un ValorOz existente en el Almacen\n");
+    exit(1);
   }
   ValorOz_Float *n_var;
   n_var = new ValorOz_Float(n_key, flotante);
@@ -390,12 +454,45 @@ void Almacen::agregar_variable(string n_key, float flotante){
 }
 
 
-void Almacen::set_val(string key, int n_val){
+void Almacen::agregar_variable(string n_key, string n_etiqueta, list<Campo *> n_campos){
+/*Agrega un nuevo ValorOz al Almacen*/
+/*Pre: !(Existe ValorOz->key == key && key pertenece a variables->keys)*/
+/*Pos Almacen = {...(n_key, nuevo ValorOz_Reg)...}
+      ValorOz_Float->etiqueta = n_etiqueta*/
+  if (in_almacen(n_key)){
+    fprintf(stderr, "Redefinición de un ValorOz existente en el Almacen\n");
+    exit(1);
+  }
+  ValorOz_Reg *n_var;
+  int i = 0;
+  list<Campo *> n_campos2;
+  for (list<Campo *>::iterator it = n_campos.begin(); i < n_campos.size(); it++, i++) {
+    if ((*it)->type == "key"){
+      if (in_almacen((*it)->get_val())){
+        Campo_Oz *temp;
+        temp = new Campo_Oz((*it)->name, variables[(*it)->get_val()]);
+        n_campos2.push_front(temp);
+      }
+      else{
+        fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
+        exit(1);
+      }
+    }
+    else{
+      n_campos2.push_front(*it);
+    }
+  }
+  n_var = new ValorOz_Reg(n_key, n_etiqueta, n_campos2);
+  variables[n_key] = n_var;
+}
+
+
+void Almacen::unificar(string key, int n_val){
   if (!in_almacen(key)){
     fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
     exit(1);
   }
-  comparator comp;
+  Comparator comp;
   variables[key]->get_val(comp);
   if (is_empty(key)){
     // Se supone que solo hay ValorOz_Int o Float con valores != vacio ya que
@@ -422,12 +519,12 @@ void Almacen::set_val(string key, int n_val){
 }
 
 
-void Almacen::set_val(string key, float n_val){
+void Almacen::unificar(string key, float n_val){
   if (!in_almacen(key)){
     fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
     exit(1);
   }
-  comparator comp;
+  Comparator comp;
   variables[key]->get_val(comp);
   if (is_empty(key)){
     if (comp.type == "char"){
@@ -452,6 +549,30 @@ void Almacen::set_val(string key, float n_val){
 }
 
 
+void Almacen::unificar(string key, string n_etiqueta, list<Campo *>n_campos){
+  if (!in_almacen(key)){
+    fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
+    exit(1);
+  }
+  Comparator comp;
+  variables[key]->get_val(comp);
+  if (is_empty(key)){
+    if (comp.type == "char"){
+      ValorOz_Reg *n_Reg;
+      n_Reg = new ValorOz_Reg(variables[key]->get_key(), n_etiqueta, n_campos);
+      n_Reg->set_father(variables[key]->get_father());
+      n_Reg->add_sons(variables[key]->get_sons());
+      delete variables[key];
+      variables[key] = n_Reg;
+    }
+    else{
+      fprintf(stderr, "Asignación de valor a un ValorOz no vacio\n");
+      exit(1);
+    }
+  }
+}
+
+
 void Almacen::print_almacen(){
 /*Imprime la informacion de cada elemento del Almacen*/
 /*Pre: True*/
@@ -466,11 +587,6 @@ void Almacen::print_almacen(){
        it->second->consultar_val();
        cout << endl;
      }
-     /*int i = 0;
-     for(list<ValorOz *>::iterator jt = it->second->get_sons().begin(); i < it->second->get_sons().size(); ++jt, i++){
-       cout << (*jt)->get_key();
-     }
-     cout << "--------" << endl;*/
   }
 }
 
@@ -481,7 +597,7 @@ bool Almacen::equal_vals(string key1, string key2){
 /*Pos: True si valor de key1 == valor de key2
        False si valor de key1 != valor de key2*/
   if(in_almacen(key1) && in_almacen(key2)){
-    comparator comp1, comp2;
+    Comparator comp1, comp2;
     variables[key1]->get_val(comp1);
     variables[key2]->get_val(comp2);
     return (comp1 == comp2);
@@ -513,7 +629,7 @@ void Almacen::unificar(string val1, string val2){
         temp_father2 = variables[val2];
       //Cambio de ValorOz
       /*if (!is_empty(val2)){
-        comparator comp;
+        Comparator comp;
         temp_father2->get_val(comp);
         variables.erase(val1);
         if(comp.type == "int"){
@@ -549,21 +665,6 @@ void Almacen::unificar(string val1, string val2){
           temp_father1 = variables[val1]->get_father();
         else
           temp_father1 = variables[val1];
-        //Cambio de ValorOz
-        /*if (is_empty(val2)){
-          comparator comp;
-          temp_father1->get_val(comp);
-          variables.erase(val2);
-          if(comp.type == "int"){
-            //ValorOz_Int *n_ValorOz = new ValorOz_Int(val2, comp)
-            agregar_variable(val2, comp.un_comp.i);
-          }
-          if (comp.type == "float"){
-            //ValorOz_Float *n_ValorOz = new ValorOz_Float(val2, comp)
-            agregar_variable(val2, comp.un_comp.f);
-          }
-        }*/
-
         /*Asignación temp_father*/
         if (variables[val2]->get_father())
           temp_father2 = variables[val2]->get_father();
