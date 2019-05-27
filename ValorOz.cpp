@@ -353,7 +353,17 @@ Campo_Oz::Campo_Oz(string n_name, ValorOz *n_Oz) : Campo(n_name){
   type = "Oz";
 }
 void Campo_Oz::cons_val(){
-  val->consultar_val();
+  Comparator comp;
+  val->get_val(comp);
+  if (comp.type == "int")
+    cout << comp.un_comp.i;
+  if (comp.type == "float")
+    cout << comp.un_comp.f;
+  if (comp.type == "char")
+    if (comp.un_comp.c == '|')
+      cout << val->get_key();
+    else if (comp.un_comp.c == '_')
+      val->consultar_val();
 }
 
 ValorOz_Reg::ValorOz_Reg(string n_key, string n_etiqueta, list<Campo *> n_campos) : ValorOz(n_key){
@@ -373,13 +383,14 @@ list<Campo *> ValorOz_Reg::get_campos(){
 
 
 void ValorOz_Reg::consultar_val(){
-  cout << etiqueta << '(';
+  cout << '['<< etiqueta << '(';
   int i = 0;
   for (auto it = campos.begin(); i < campos.size(); it++, i++) {
+    cout<< (*it)->name << ": ";
     (*it)->cons_val();
     if (i < campos.size() - 1)cout << ", ";
   }
-  cout << ')';
+  cout << ")]";
 }
 
 /*=====Almacen=====*/
@@ -492,6 +503,8 @@ void Almacen::unificar(string key, int n_val){
     fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
     exit(1);
   }
+  if (variables[key]->get_father())
+    key = variables[key]->get_father()->get_key();
   Comparator comp;
   variables[key]->get_val(comp);
   if (is_empty(key)){
@@ -506,15 +519,15 @@ void Almacen::unificar(string key, int n_val){
       variables[key] = n_Int;
     }
     else{
-      if (n_val != comp.un_comp.i){
-        fprintf(stderr, "Asignación de valor a un ValorOz no vacio\n");
-        exit(1);
-      }
+      fprintf(stderr, "Asignación de valor a un ValorOz no vacio\n");
+      exit(1);
     }
   }
   else{
-    fprintf(stderr, "Asignación de valor a un ValorOz no vacio\n");
-    exit(1);
+    if (n_val != comp.un_comp.i){
+      fprintf(stderr, "Asignación de valor a un ValorOz no vacio\n");
+      exit(1);
+    }
   }
 }
 
@@ -524,8 +537,11 @@ void Almacen::unificar(string key, float n_val){
     fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
     exit(1);
   }
+  if (variables[key]->get_father())
+    key = variables[key]->get_father()->get_key();
   Comparator comp;
-  variables[key]->get_val(comp);
+  variables[key]->get_val(comp); //Extrae el valor de la variable correspondiente
+  //a key en el mapa
   if (is_empty(key)){
     if (comp.type == "char"){
       ValorOz_Float *n_Float;

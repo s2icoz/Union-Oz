@@ -64,7 +64,8 @@ class ValorOz{
     string get_key();
 		ValorOz* get_father();
     void get_val(char &ans);
-    virtual void get_val(Comparator &ans);
+    virtual void get_val(Comparator &ans); //Trae el procedimiento más
+		//recientemente sobre escrito en el arbol de herencia
     list<ValorOz *> get_sons();
 
     virtual bool empty();
@@ -147,7 +148,7 @@ class Campo_Oz: public Campo{
 
 class ValorOz_Reg : public ValorOz{
 	private:
-		char val = '|';
+		char val = '|'; //Valor po defecto
 		string etiqueta;
 		list<Campo *> campos;
 	public:
