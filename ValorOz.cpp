@@ -310,34 +310,29 @@ void ValorOz_Float::consultar_val(){
 }
 
 /*====ValorOz_Reg====*/
-Campo::Campo(string n_name){
-  name = n_name;
+Campo::Campo(){
   type = "vacio";
 }
-string Campo::get_val(){
-  return val;
-}
-void Campo::cons_val(){
-  cout << val;
-}
+string Campo:: get_val(){}
+void Campo:: cons_val(){}
 
-Campo_Int::Campo_Int(string n_name, int n_entero) : Campo(n_name){
+Campo_Int::Campo_Int(int n_entero) : Campo(){
   val = n_entero;
   type = "int";
 }
 void Campo_Int::cons_val(){
-  cout << name << ':' << val;
+  cout  << val;
 }
 
-Campo_Float::Campo_Float(string n_name, float n_flotante) : Campo(n_name){
+Campo_Float::Campo_Float(float n_flotante) : Campo(){
   val = n_flotante;
   type = "float";
 }
 void Campo_Float::cons_val(){
-  cout << name << ':' << val;
+  cout << val;
 }
 
-Campo_Key::Campo_Key(string n_name, string key) : Campo(n_name){
+Campo_Key::Campo_Key(string key) : Campo(){
   val = key;
   type = "key";
 }
@@ -345,10 +340,10 @@ string Campo_Key::get_val(){
   return val;
 }
 void Campo_Key::cons_val(){
-  cout << name << ':' << val;
+  cout << val;
 }
 
-Campo_Oz::Campo_Oz(string n_name, ValorOz *n_Oz) : Campo(n_name){
+Campo_Oz::Campo_Oz(ValorOz *n_Oz) : Campo(){
   val = n_Oz;
   type = "Oz";
 }
@@ -360,13 +355,14 @@ void Campo_Oz::cons_val(){
   if (comp.type == "float")
     cout << comp.un_comp.f;
   if (comp.type == "char")
-    if (comp.un_comp.c == '|')
-      cout << val->get_key();
-    else if (comp.un_comp.c == '_')
+    if (comp.un_comp.c == '|'){
       val->consultar_val();
+    }
+    else if (comp.un_comp.c == '_')
+      cout << val->get_key();
 }
 
-ValorOz_Reg::ValorOz_Reg(string n_key, string n_etiqueta, list<Campo *> n_campos) : ValorOz(n_key){
+ValorOz_Reg::ValorOz_Reg(string n_key, string n_etiqueta, map<string, Campo *> n_campos) : ValorOz(n_key){
   etiqueta = n_etiqueta;
   campos = n_campos;
 }
@@ -377,7 +373,7 @@ string ValorOz_Reg::get_etiqueta(){
 }
 
 
-list<Campo *> ValorOz_Reg::get_campos(){
+map<string, Campo *> ValorOz_Reg::get_campos(){
   return campos;
 }
 
@@ -386,13 +382,20 @@ void ValorOz_Reg::consultar_val(){
   cout << '['<< etiqueta << '(';
   int i = 0;
   for (auto it = campos.begin(); i < campos.size(); it++, i++) {
-    cout<< (*it)->name << ": ";
-    (*it)->cons_val();
+    cout<< it->first << ": ";
+    it->second->cons_val();
     if (i < campos.size() - 1)cout << ", ";
   }
   cout << ")]";
 }
-
+void ValorOz_Reg::get_val(Comparator &ans){
+  if (father){
+    father->get_val(ans);
+  }
+  else{
+    ans = val;
+  }
+}
 /*=====Almacen=====*/
 
 bool Almacen::in_almacen(string key){
@@ -465,7 +468,7 @@ void Almacen::agregar_variable(string n_key, float flotante){
 }
 
 
-void Almacen::agregar_variable(string n_key, string n_etiqueta, list<Campo *> n_campos){
+void Almacen::agregar_variable(string n_key, string n_etiqueta, map<string, Campo *> n_campos){
 /*Agrega un nuevo ValorOz al Almacen*/
 /*Pre: !(Existe ValorOz->key == key && key pertenece a variables->keys)*/
 /*Pos Almacen = {...(n_key, nuevo ValorOz_Reg)...}
@@ -474,26 +477,22 @@ void Almacen::agregar_variable(string n_key, string n_etiqueta, list<Campo *> n_
     fprintf(stderr, "Redefinición de un ValorOz existente en el Almacen\n");
     exit(1);
   }
-  ValorOz_Reg *n_var;
   int i = 0;
-  list<Campo *> n_campos2;
-  for (list<Campo *>::iterator it = n_campos.begin(); i < n_campos.size(); it++, i++) {
-    if ((*it)->type == "key"){
-      if (in_almacen((*it)->get_val())){
+  for (map<string, Campo *>::iterator it = n_campos.begin(); i < n_campos.size(); it++, i++) {
+    if (it->second->type == "key"){
+      if (in_almacen(it->second->get_val())){
         Campo_Oz *temp;
-        temp = new Campo_Oz((*it)->name, variables[(*it)->get_val()]);
-        n_campos2.push_front(temp);
+        temp = new Campo_Oz(variables[it->second->get_val()]);
+        n_campos[it->first] = temp;
       }
       else{
         fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
         exit(1);
       }
     }
-    else{
-      n_campos2.push_front(*it);
-    }
   }
-  n_var = new ValorOz_Reg(n_key, n_etiqueta, n_campos2);
+  ValorOz_Reg *n_var;
+  n_var = new ValorOz_Reg(n_key, n_etiqueta, n_campos);
   variables[n_key] = n_var;
 }
 
@@ -565,7 +564,7 @@ void Almacen::unificar(string key, float n_val){
 }
 
 
-void Almacen::unificar(string key, string n_etiqueta, list<Campo *>n_campos){
+void Almacen::unificar(string key, string n_etiqueta, map<string, Campo *>n_campos){
   if (!in_almacen(key)){
     fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
     exit(1);
@@ -631,71 +630,78 @@ void Almacen::unificar(string val1, string val2){
     fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
     exit(1);
   }
-  ValorOz *temp_father1, *temp_father2;
-
-  if (is_empty(val1)){
-    //hacer que val2 sea el padre;
-    if (prev_union(variables[val1], variables[val2]) ||
-     prev_union(variables[val2], variables[val1])){}
-    else{
-      /*Asignación temp_father*/
-      if (variables[val2]->get_father())
-        temp_father2 = variables[val2]->get_father();
-      else
-        temp_father2 = variables[val2];
-      //Cambio de ValorOz
-      /*if (!is_empty(val2)){
-        Comparator comp;
-        temp_father2->get_val(comp);
-        variables.erase(val1);
-        if(comp.type == "int"){
-          //ValorOz_Int *n_ValorOz = new ValorOz_Int(val2, comp)
-          agregar_variable(val1, comp.un_comp.i);
-        }
-        if (comp.type == "float"){
-          //ValorOz_Float *n_ValorOz = new ValorOz_Float(val2, comp)
-          agregar_variable(val1, comp.un_comp.f);
-        }
-      }*/
-      /*Asignación temp_father*/
-      if (variables[val1]->get_father())
-        temp_father1 = variables[val1]->get_father();
-      else
-        temp_father1 = variables[val1];
-
-      temp_father2->add_sons(temp_father1);
-      if (temp_father1->get_sons().size()){
-        temp_father2->add_sons(temp_father1->get_sons());
-        temp_father1->elim_sons();
+  Comparator comp1, comp2;
+  variables[val1]->get_val(comp1);
+  variables[val2]->get_val(comp2);
+  if (comp1.un_comp.c == '|' || comp2.un_comp.c == '|'){
+    if (comp1.un_comp.c == '|' && comp2.un_comp.c == '|'){
+      ValorOz_Reg *reg1, *reg2;
+      reg1 = (ValorOz_Reg *)variables[val1];
+      reg2 = (ValorOz_Reg *)variables[val2];
+      if (reg1->get_campos().size() != reg2->get_campos().size()){
+        fprintf(stderr, "Unificación de un registros con diferentes cantidades de campos\n");
+        exit(1);
       }
+      cout << "Awimbawe" << endl;
+    }
+    else{
+      fprintf(stderr, "Unificación de un registro con un no registro\n");
+      exit(1);
     }
   }
   else{
-    if (is_empty(val2) || equal_vals(val1, val2)){
+    ValorOz *temp_father1, *temp_father2;
+
+    if (is_empty(val1)){
+      //hacer que val2 sea el padre;
       if (prev_union(variables[val1], variables[val2]) ||
        prev_union(variables[val2], variables[val1])){}
       else{
-        //hacer que val1 sea el padre;
-        /*Asignación temp_father*/
-        if (variables[val1]->get_father())
-          temp_father1 = variables[val1]->get_father();
-        else
-          temp_father1 = variables[val1];
         /*Asignación temp_father*/
         if (variables[val2]->get_father())
           temp_father2 = variables[val2]->get_father();
         else
           temp_father2 = variables[val2];
-        temp_father1->add_sons(temp_father2);
-        if (temp_father2->get_sons().size()){
-          temp_father1->add_sons(temp_father2->get_sons());
-          temp_father2->elim_sons();
+
+        if (variables[val1]->get_father())
+          temp_father1 = variables[val1]->get_father();
+        else
+          temp_father1 = variables[val1];
+
+        temp_father2->add_sons(temp_father1);
+        if (temp_father1->get_sons().size()){
+          temp_father2->add_sons(temp_father1->get_sons());
+          temp_father1->elim_sons();
         }
       }
     }
     else{
-      fprintf(stderr, "Unificación de variables con valores diferentes\n");
-      exit(1);
+      if (is_empty(val2) || equal_vals(val1, val2)){
+        if (prev_union(variables[val1], variables[val2]) ||
+         prev_union(variables[val2], variables[val1])){}
+        else{
+          //hacer que val1 sea el padre;
+          /*Asignación temp_father*/
+          if (variables[val1]->get_father())
+            temp_father1 = variables[val1]->get_father();
+          else
+            temp_father1 = variables[val1];
+          /*Asignación temp_father*/
+          if (variables[val2]->get_father())
+            temp_father2 = variables[val2]->get_father();
+          else
+            temp_father2 = variables[val2];
+          temp_father1->add_sons(temp_father2);
+          if (temp_father2->get_sons().size()){
+            temp_father1->add_sons(temp_father2->get_sons());
+            temp_father2->elim_sons();
+          }
+        }
+      }
+      else{
+        fprintf(stderr, "Unificación de variables con valores diferentes\n");
+        exit(1);
+      }
     }
   }
 }
