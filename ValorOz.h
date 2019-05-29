@@ -216,4 +216,14 @@ class Almacen{
 		string cadena_valor(string key);
     void print_almacen();
 };
+
+
+class Operaciones{
+	private:
+		Almacen storage;
+		char *id1 = new char(), *id2 = new char(), *v1 = new char(), *v2 = new char();
+	public:
+		void entrada(char*,char*,char*,char*);
+		void imprimir();
+};
 #endif

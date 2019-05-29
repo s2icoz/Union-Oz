@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <list>
 #include <sstream>
+#include <string.h>
 #include <algorithm>
 #include "ValorOz.h"
 
@@ -1060,4 +1061,190 @@ void Almacen::unificar(string val1, string val2){
       }
     }
   }
+}
+
+
+void Operaciones::entrada(char *id1, char *id2 , char *v1, char *v2){
+  if(strcmp(id1,"Oz") == 0 && strcmp(id2,"Oz") == 0){
+      storage.unificar(v1,v2);
+  }
+  else if(strcmp(id1,"r") == 0 || strcmp(id2,"r") == 0){
+    char label[50];
+    if (strcmp(id2,"r") == 0) {
+      int i = 0, k = 0;
+      list<char> format;
+
+      map<string, Campo *> mp;
+      storage.agregar_variable(v1);
+
+      while (v2[i] != '[') {
+        if (v2[i] == 'i') {
+          format.push_back('i');
+        }else if(v2[i] == 'f') {
+          format.push_back('f');
+        }else if(v2[i] == 'k') {
+          format.push_back('k');
+        }else{
+          fprintf(stderr, "Errorr");
+        }
+        i++;
+      }
+      i++;
+
+      while (v2[i] != '(') {
+        label[k] = v2[i];
+        k++;
+        i++;
+      }
+      i++;
+
+      int n = format.size();
+
+      while (n--) {
+        char name[50] = "", valor[50] = "";
+        int j = 0, h = 0;
+
+        while (v2[i] != ':') {
+          name[j] = v2[i];
+          j++;
+          i++;
+        }
+        i++;
+
+        while (v2[i] != ',' && v2[i] != ')') {
+          valor[h] = v2[i];
+          h++;
+          i++;
+        }
+        i++;
+
+        if(format.front() == 'i'){
+          mp[name] = new Campo_Int(atoi(valor));
+          format.pop_front();
+        }else if(format.front() == 'f'){
+          mp[name] = new Campo_Float(float(atof(valor)));
+          format.pop_front();
+        }else if(format.front() == 'k'){
+          mp[name] = new Campo_Key(valor);
+          format.pop_front();
+        }
+      }
+      storage.unificar(v1,label,mp);
+
+    }else if(strcmp(id1,"r") == 0){
+      int i = 0, k = 0;
+      list<char> format;
+
+      map<string, Campo *> mp;
+      storage.agregar_variable(v2);
+
+      while (v1[i] != '[') {
+        if (v1[i] == 'i') {
+          format.push_back('i');
+        }else if(v1[i] == 'f') {
+          format.push_back('f');
+        }else if(v1[i] == 'k') {
+          format.push_back('k');
+        }else{
+          fprintf(stderr, "Errorr");
+        }
+        i++;
+      }
+      i++;
+
+      while (v1[i] != '(') {
+        label[k] = v1[i];
+        k++;
+        i++;
+      }
+      i++;
+
+      int n = format.size();
+
+      while (n--) {
+        char name[50] = "", valor[50] = "";
+        int j = 0, h = 0;
+
+        while (v1[i] != ':') {
+          name[j] = v1[i];
+          j++;
+          i++;
+        }
+        i++;
+
+        while (v1[i] != ',' && v1[i] != ')') {
+          valor[h] = v1[i];
+          h++;
+          i++;
+        }
+        i++;
+
+        if(format.front() == 'i'){
+          mp[name] = new Campo_Int(atoi(valor));
+          format.pop_front();
+        }else if(format.front() == 'f'){
+          mp[name] = new Campo_Float(float(atof(valor)));
+          format.pop_front();
+        }else if(format.front() == 'k'){
+          mp[name] = new Campo_Key(valor);
+          format.pop_front();
+        }
+      }
+      storage.unificar(v2,label,mp);
+    }
+  }
+  else{
+
+    if (strcmp(id1,"Oz") == 0) {
+      if (strcmp(id2,"i") == 0) {
+        if (!storage.in_almacen(v1)) {
+          if (strcmp(v2,"_") == 0) {
+            storage.agregar_variable(v1);
+          }
+          else{
+            storage.agregar_variable(v1,atoi(v2));
+          }
+        }else{
+
+          storage.unificar(v1,atoi(v2));
+        }
+      }
+      else if(strcmp(id2,"f") == 0){
+        if (!storage.in_almacen(v1)) {
+          storage.agregar_variable(v1,atoi(v2));
+        }else{
+          storage.agregar_variable(v1,float(atof(v2)));
+        }
+
+      }
+      else if(strcmp(id2,"v") == 0){
+        storage.agregar_variable(v1);
+      }
+
+    }
+    else if(strcmp(id2,"Oz") == 0){
+      if (strcmp(id1,"i") == 0) {
+        if (!storage.in_almacen(v2)) {
+          storage.agregar_variable(v2,atoi(v1));
+        }else{
+          storage.unificar(v2,atoi(v1));
+        }
+      }
+      else if(strcmp(id1,"f") == 0){
+        if (!storage.in_almacen(v2)) {
+          storage.agregar_variable(v2,float(atoi(v1)));
+        }else{
+          storage.agregar_variable(v2,float(atof(v1)));
+        }
+      }
+      else if(strcmp(id1,"v") == 0){
+        storage.agregar_variable(v2);
+      }
+    }
+  }
+
+}
+
+void Operaciones::imprimir(){
+  storage.print_almacen();
 }
