@@ -115,19 +115,20 @@ class Campo{
 	public:
 		string type;
 		Campo();
-		virtual string get_val();
 		virtual void cons_val();
 };
 class Campo_Int: public Campo{
 	public:
 		int val;
 		Campo_Int(int n_entero);
+		int get_val();
 		void cons_val();
 };
 class Campo_Float: public Campo{
 	public:
 		float val;
 		Campo_Float(float n_flotante);
+		float get_val();
 		void cons_val();
 };
 class Campo_Key: public Campo{
@@ -141,6 +142,7 @@ class Campo_Oz: public Campo{
 	public:
 		ValorOz *val;
 		Campo_Oz(ValorOz *n_Oz);
+		string get_val();
 		void cons_val();
 };
 
@@ -153,6 +155,7 @@ class ValorOz_Reg : public ValorOz{
 		ValorOz_Reg(string n_key, string n_etiqueta, map<string, Campo *> n_campos);
 		string get_etiqueta();
 		map<string, Campo *> get_campos();
+		void set_campo(string name, Campo *val);
 		void consultar_val();
 		void get_val(Comparator &ans);
 };

@@ -313,12 +313,14 @@ void ValorOz_Float::consultar_val(){
 Campo::Campo(){
   type = "vacio";
 }
-string Campo:: get_val(){}
 void Campo:: cons_val(){}
 
 Campo_Int::Campo_Int(int n_entero) : Campo(){
   val = n_entero;
   type = "int";
+}
+int Campo_Int::get_val(){
+  return val;
 }
 void Campo_Int::cons_val(){
   cout  << val;
@@ -327,6 +329,9 @@ void Campo_Int::cons_val(){
 Campo_Float::Campo_Float(float n_flotante) : Campo(){
   val = n_flotante;
   type = "float";
+}
+float Campo_Float::get_val(){
+  return val;
 }
 void Campo_Float::cons_val(){
   cout << val;
@@ -347,19 +352,23 @@ Campo_Oz::Campo_Oz(ValorOz *n_Oz) : Campo(){
   val = n_Oz;
   type = "Oz";
 }
+string Campo_Oz::get_val(){
+  return val->get_key();
+}
 void Campo_Oz::cons_val(){
-  Comparator comp;
-  val->get_val(comp);
-  if (comp.type == "int")
-    cout << comp.un_comp.i;
-  if (comp.type == "float")
-    cout << comp.un_comp.f;
-  if (comp.type == "char")
-    if (comp.un_comp.c == '|'){
-      val->consultar_val();
-    }
-    else if (comp.un_comp.c == '_')
-      cout << val->get_key();
+  // Comparator comp;
+  // val->get_val(comp);
+  // if (comp.type == "int")
+  //   cout << comp.un_comp.i;
+  // if (comp.type == "float")
+  //   cout << comp.un_comp.f;
+  // if (comp.type == "char")
+  //   if (comp.un_comp.c == '|'){
+  //     val->consultar_val();
+  //   }
+  //   else if (comp.un_comp.c == '_')
+  //     cout << val->get_key();
+  cout << val->get_key();
 }
 
 ValorOz_Reg::ValorOz_Reg(string n_key, string n_etiqueta, map<string, Campo *> n_campos) : ValorOz(n_key){
@@ -378,10 +387,15 @@ map<string, Campo *> ValorOz_Reg::get_campos(){
 }
 
 
+void ValorOz_Reg::set_campo(string name, Campo *val){
+  campos[name] = val;
+}
+
+
 void ValorOz_Reg::consultar_val(){
-  cout << '['<< etiqueta << '(';
   int i = 0;
-  for (auto it = campos.begin(); i < campos.size(); it++, i++) {
+  cout << '['<< etiqueta << '(';
+  for (auto it = campos.begin(); it != campos.end(); it++, i++) {
     cout<< it->first << ": ";
     it->second->cons_val();
     if (i < campos.size() - 1)cout << ", ";
@@ -480,10 +494,16 @@ void Almacen::agregar_variable(string n_key, string n_etiqueta, map<string, Camp
   int i = 0;
   for (map<string, Campo *>::iterator it = n_campos.begin(); i < n_campos.size(); it++, i++) {
     if (it->second->type == "key"){
-      if (in_almacen(it->second->get_val())){
-        Campo_Oz *temp;
-        temp = new Campo_Oz(variables[it->second->get_val()]);
-        n_campos[it->first] = temp;
+      Campo_Key *temp;
+      temp = (Campo_Key *)it->second;
+      if (temp->get_val() == n_key){
+        fprintf(stderr, "Campo con ValorOz igual al mismo registro\n");
+        exit(1);
+      }
+      if (in_almacen(temp->get_val())){
+        Campo_Oz *temp2;
+        temp2 = new Campo_Oz(variables[temp->get_val()]);
+        n_campos[it->first] = temp2;
       }
       else{
         fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
@@ -573,6 +593,26 @@ void Almacen::unificar(string key, string n_etiqueta, map<string, Campo *>n_camp
   variables[key]->get_val(comp);
   if (is_empty(key)){
     if (comp.type == "char"){
+      int i = 0;
+      for (map<string, Campo *>::iterator it = n_campos.begin(); i < n_campos.size(); it++, i++) {
+        if (it->second->type == "key"){
+          Campo_Key *temp;
+          temp = (Campo_Key *)it->second;
+          if (temp->get_val() == key){
+            fprintf(stderr, "Campo con ValorOz igual al mismo registro\n");
+            exit(1);
+          }
+          if (in_almacen(temp->get_val())){
+            Campo_Oz *temp2;
+            temp2 = new Campo_Oz(variables[temp->get_val()]);
+            n_campos[it->first] = temp2;
+          }
+          else{
+            fprintf(stderr, "Referencia a ValorOz no definido en el Almacen\n");
+            exit(1);
+          }
+        }
+      }
       ValorOz_Reg *n_Reg;
       n_Reg = new ValorOz_Reg(variables[key]->get_key(), n_etiqueta, n_campos);
       n_Reg->set_father(variables[key]->get_father());
@@ -638,11 +678,118 @@ void Almacen::unificar(string val1, string val2){
       ValorOz_Reg *reg1, *reg2;
       reg1 = (ValorOz_Reg *)variables[val1];
       reg2 = (ValorOz_Reg *)variables[val2];
+      if (reg1->get_etiqueta() != reg2->get_etiqueta()){
+        fprintf(stderr, "Unificación de un registros con diferentes etiquetas\n");
+        exit(1);
+      }
       if (reg1->get_campos().size() != reg2->get_campos().size()){
         fprintf(stderr, "Unificación de un registros con diferentes cantidades de campos\n");
         exit(1);
       }
-      cout << "Awimbawe" << endl;
+      list<string> temp1, temp2;
+      map<string, Campo *>::iterator it;
+      it =  reg1->get_campos().begin();
+      while (it != reg1->get_campos().end()) {
+        temp1.push_back(it->first);
+        it++;
+      }
+      it =  reg2->get_campos().begin();
+      while (it != reg2->get_campos().end()) {
+        temp2.push_back(it->first);
+        it++;
+      }
+      int i = 0;
+      list<string>::iterator vt = temp1.begin();
+      while (i < temp1.size()) {
+        if (find(temp2.begin(), temp2.end(), *vt) == temp2.end()){
+          fprintf(stderr, "Diferentes nombres de campos en Unificación de regs\n");
+          exit(1);
+        }
+        vt++;
+        i++;
+      }//Verificacion campos hasta aqui
+      i = 0;
+      list<string>::iterator jt = temp1.begin();
+      while (i < temp1.size()) {
+        string type1, type2;
+        type1 = reg1->get_campos()[*jt]->type;
+        type2 = reg2->get_campos()[*jt]->type;
+        // cout << type1 << ' ' << type2 << endl;
+        if ((type1 == "int" && type2 == "float") || (type2 == "int" && type1 == "float")){
+          fprintf(stderr, "Unificación de numeros diferentes\n");
+          exit(1);
+        }
+        else if (type1 == "int" && type2 == "int"){
+          Campo_Int *ent1, *ent2;
+          ent1 = (Campo_Int *)(reg1->get_campos()[*jt]);
+          ent2 = (Campo_Int *)(reg2->get_campos()[*jt]);
+          if (ent1->val != ent2->val){
+            fprintf(stderr, "Unificación de numeros diferentes\n");
+            exit(1);
+          }
+        }
+        else if (type1 == "float" && type2 == "float"){
+          Campo_Float *float1, *float2;
+          float1 = (Campo_Float *)(reg1->get_campos()[*jt]);
+          float2 = (Campo_Float *)(reg2->get_campos()[*jt]);
+          if (float1->val != float2->val){
+            fprintf(stderr, "Unificación de numeros diferentes\n");
+            exit(1);
+          }
+        }
+        else if(type1 == "Oz"){
+          Campo_Oz *COz1;
+          COz1 = (Campo_Oz *)(reg1->get_campos()[*jt]);
+          if (type2 == "int"){
+            Campo_Int *v2;
+            v2 = (Campo_Int *)(reg2->get_campos()[*jt]);
+            unificar(COz1->val->get_key(), v2->val);
+            ValorOz_Reg *cambio;
+            cambio = (ValorOz_Reg *)variables[val2];
+            cambio->set_campo(*jt, COz1);
+          }
+          else if (type2 == "float"){
+            Campo_Float *v2;
+            v2 = (Campo_Float *)(reg2->get_campos()[*jt]);
+            unificar(COz1->val->get_key(), v2->val);
+            ValorOz_Reg *cambio;
+            cambio = (ValorOz_Reg *)variables[val2];
+            cambio->set_campo(*jt, COz1);
+          }
+          else if (type2 == "Oz"){
+            Campo_Oz *v2;
+            v2 = (Campo_Oz *)(reg2->get_campos()[*jt]);
+            unificar(COz1->val->get_key(), v2->val->get_key());
+          }
+        }
+        else if(type2 == "Oz"){
+          Campo_Oz *COz2;
+          COz2 = (Campo_Oz *)(reg2->get_campos()[*jt]);
+          if (type1 == "int"){
+            Campo_Int *v2;
+            v2 = (Campo_Int *)(reg1->get_campos()[*jt]);
+            unificar(COz2->val->get_key(), v2->val);
+            ValorOz_Reg *cambio;
+            cambio = (ValorOz_Reg *)variables[val1];
+            cambio->set_campo(*jt, COz2);
+          }
+          else if (type1 == "float"){
+            Campo_Float *v2;
+            v2 = (Campo_Float *)(reg1->get_campos()[*jt]);
+            unificar(COz2->val->get_key(), v2->val);
+            ValorOz_Reg *cambio;
+            cambio = (ValorOz_Reg *)variables[val1];
+            cambio->set_campo(*jt, COz2);
+          }
+          else if (type1 == "Oz"){
+            Campo_Oz *v2;
+            v2 = (Campo_Oz *)(reg1->get_campos()[*jt]);
+            unificar(COz2->val->get_key(), v2->val->get_key());
+          }
+        }
+        // // cout << type1 << ' ' << type2 << endl;
+        jt++;i++;
+      }
     }
     else{
       fprintf(stderr, "Unificación de un registro con un no registro\n");
