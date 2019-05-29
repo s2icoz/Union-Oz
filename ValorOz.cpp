@@ -1065,6 +1065,9 @@ void Almacen::unificar(string val1, string val2){
 
 
 void Operaciones::entrada(char *id1, char *id2 , char *v1, char *v2){
+  /* Recibe una expresion y la transforma para poder guardarla en el almacen */
+  /* Pre: Recibe una expresion que ha sido ingresado por pantalla */
+  /* Pos: Transforma y evulua la expresion para poder guardarla en el almacen*/
   if(strcmp(id1,"Oz") == 0 && strcmp(id2,"Oz") == 0){
       storage.unificar(v1,v2);
   }
