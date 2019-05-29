@@ -1,3 +1,13 @@
+/*
+ * Autores: Simón Zuluaga, Geiler Hipia y Sebastian Mena
+ * Fecha de creación: 30 de Marzo de 2019
+ * Fecha última modificación: 29 de Mayo de 2019
+ * Versión: 1.0
+ *
+ * Archivo encabezado libreria TAD ValorOz
+ *
+ */
+
 #ifndef VALOROZ_H
 #define VALOROZ_H
 #include <list>
@@ -5,6 +15,9 @@
 
 using namespace std;
 
+/************************
+* ESTRUCTURAS DE DATOS *
+************************/
 union comparer{
 /*Estructura especial para diferenciar entre
  ValorOz, ValorOz_Int y ValorOz_Float*/
@@ -54,24 +67,26 @@ class ValorOz{
     list<ValorOz *> sons;
   public:
     char vacio = '_';
-    ValorOz(string n_key);
+		/* Constructoras */
+		ValorOz(string n_key);
 
-    void set_father(ValorOz *n_father);
-    void add_sons(ValorOz *n_son);
-    void add_sons(list<ValorOz *> n_sons);
-    void elim_sons();
+		/*Modificadoras*/
+		void set_father(ValorOz *n_father);
+		void add_sons(ValorOz *n_son);
+		void add_sons(list<ValorOz *> n_sons);
+		void elim_sons();
+		void set_val(char v);
 
+		/*Analizadoras*/
     string get_key();
 		ValorOz* get_father();
+		list<ValorOz *> get_sons();
     void get_val(char &ans);
     virtual void get_val(Comparator &ans); //Trae el procedimiento más
 		//recientemente sobre escrito en el arbol de herencia
-    list<ValorOz *> get_sons();
+		virtual bool empty();
+		virtual void consultar_val();
 
-    virtual bool empty();
-    virtual void consultar_val();
-
-    void set_val(char v);
 };
 
 
@@ -80,16 +95,19 @@ class ValorOz_Int : public ValorOz{
     int val;
   public:
     int vacio = 0;
-    ValorOz_Int(string n_key, int entero);
+		/*Constructoras*/
+		ValorOz_Int(string n_key, int entero);
 
+		/*Modificadoras*/
+		void set_val(int num);
+		void set_val(Comparator &comp);
+
+		/*Analizadoras*/
     void get_val(int &ans);
     void get_val(Comparator &ans);
+		bool empty();
+		void consultar_val();
 
-    bool empty();
-    void consultar_val();
-
-    void set_val(int num);
-		void set_val(Comparator &comp);
 };
 
 
@@ -98,16 +116,18 @@ class ValorOz_Float : public ValorOz{
     float val;
   public:
     float vacio = 0;
+		/*Constructoras*/
     ValorOz_Float(string n_key, float flotante);
 
+		/*Modificadoras*/
+		void set_val(float num);
+		void set_val(Comparator &comp);
+
+		/*Analizadoras*/
     float get_val(float &ans);
     void get_val(Comparator &ans);
-
     bool empty();
     void consultar_val();
-
-    void set_val(float num);
-		void set_val(Comparator &comp);
 };
 
 
@@ -115,6 +135,7 @@ class Campo{
 	public:
 		string type;
 		Campo();
+		// virtual string get_val();
 		virtual void cons_val();
 };
 class Campo_Int: public Campo{
@@ -152,11 +173,16 @@ class ValorOz_Reg : public ValorOz{
 		string etiqueta;
 		map<string, Campo *> campos;
 	public:
+		/*Constructoras*/
 		ValorOz_Reg(string n_key, string n_etiqueta, map<string, Campo *> n_campos);
+
+		/*Modificadoras*/
+		void set_campo(string name, Campo *val);
+
+		/*Analizadoras*/
 		string get_etiqueta();
 		map<string, Campo *> get_campos();
 		list<string> lista_campos();
-		void set_campo(string name, Campo *val);
 		void consultar_val();
 		void get_val(Comparator &ans);
 };
@@ -166,13 +192,21 @@ class Almacen{
   private:
     map<string, ValorOz *> variables;
   public:
+		/*Constructoras*/
 		Almacen();
 		Almacen(list<string> n_variables);
+
+		/*Modificadoras*/
     void agregar_variable(string n_key);
     void agregar_variable(string n_key, int entero);
     void agregar_variable(string n_key, float flotante);
 		void agregar_variable(string n_key, string n_etiqueta, map<string, Campo *>n_campos);
+		void unificar(string key, int n_val);
+		void unificar(string key, float n_val);
+		void unificar(string key, string n_etiqueta, map<string, Campo *>n_campos);
+		void unificar(string key1, string key2);
 
+		/*Analizadoras*/
     bool in_almacen(string key);
     bool is_empty(string key);
     bool equal_vals(string key1, string key2);
@@ -180,15 +214,6 @@ class Almacen{
 		bool consultar_ligadura(string key);
 		list<string> get_variables();
 		string cadena_valor(string key);
-
-		void unificar(string key, int n_val);
-		void unificar(string key, float n_val);
-		void unificar(string key, string n_etiqueta, map<string, Campo *>n_campos);
-		void unificar(string key1, string key2);
-
     void print_almacen();
 };
-/*
-/*!!!Almacen::consultar_valor con comaparator
-*/
 #endif
