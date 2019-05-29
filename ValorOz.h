@@ -155,6 +155,7 @@ class ValorOz_Reg : public ValorOz{
 		ValorOz_Reg(string n_key, string n_etiqueta, map<string, Campo *> n_campos);
 		string get_etiqueta();
 		map<string, Campo *> get_campos();
+		list<string> lista_campos();
 		void set_campo(string name, Campo *val);
 		void consultar_val();
 		void get_val(Comparator &ans);
@@ -165,6 +166,8 @@ class Almacen{
   private:
     map<string, ValorOz *> variables;
   public:
+		Almacen();
+		Almacen(list<string> n_variables);
     void agregar_variable(string n_key);
     void agregar_variable(string n_key, int entero);
     void agregar_variable(string n_key, float flotante);
@@ -173,6 +176,10 @@ class Almacen{
     bool in_almacen(string key);
     bool is_empty(string key);
     bool equal_vals(string key1, string key2);
+		void consultar_variable(string key);
+		bool consultar_ligadura(string key);
+		list<string> get_variables();
+		string cadena_valor(string key);
 
 		void unificar(string key, int n_val);
 		void unificar(string key, float n_val);
